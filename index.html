@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>匿名聊天室</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🐑 匿名聊天室</h1>
+            <p>畅所欲言，保护隐私 - 10分钟无人说话自动清理</p>
+        </header>
+
+        <div class="room-list">
+            <div class="room-card" onclick="enterRoom('general', '普通聊天室')">
+                <div class="room-icon">🏠</div>
+                <div class="room-info">
+                    <h3>普通聊天室</h3>
+                    <p>随便聊聊 · <span class="online-count">0</span>人在线 · <span class="status-text">活跃中</span></p>
+                </div>
+            </div>
+
+            <div class="room-card" onclick="enterRoom('game', '游戏交流室')">
+                <div class="room-icon">🎮</div>
+                <div class="room-info">
+                    <h3>游戏交流室</h3>
+                    <p>分享游戏心得 · <span class="online-count">0</span>人在线 · <span class="status-text">活跃中</span></p>
+                </div>
+            </div>
+
+            <div class="room-card" onclick="enterRoom('emotion', '情感树洞室')">
+                <div class="room-icon">💬</div>
+                <div class="room-info">
+                    <h3>情感树洞室</h3>
+                    <p>倾诉心声 · <span class="online-count">0</span>人在线 · <span class="status-text">活跃中</span></p>
+                </div>
+            </div>
+        </div>
+
+        <button class="create-room-btn" onclick="createNewRoom()">
+            + 创建新聊天室
+        </button>
+
+        <footer class="footer">
+            <p>🔒 完全匿名 · ⏱️ 自动清理 · 🎭 随机身份</p>
+        </footer>
+    </div>
+
+    <script>
+        // 进入聊天室 - 使用URL参数传递
+        function enterRoom(roomId, roomName) {
+            console.log('进入房间:', roomId, roomName);
+            
+            // 同时使用URL参数和sessionStorage
+            sessionStorage.setItem('currentRoom', roomId);
+            sessionStorage.setItem('roomName', roomName);
+            
+            // 跳转到聊天页面，携带URL参数
+            window.location.href = `chat.html?roomId=${encodeURIComponent(roomId)}&roomName=${encodeURIComponent(roomName)}`;
+        }
+
+        function createNewRoom() {
+            const roomId = 'room_' + Date.now();
+            const roomName = '新聊天室' + Math.random().toString(36).substr(2, 4);
+            enterRoom(roomId, roomName);
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('首页加载完成');
+        });
+    </script>
+</body>
+</html>

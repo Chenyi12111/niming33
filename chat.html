@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>匿名聊天室</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- 引入 LeanCloud SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.13.2/dist/av-min.js"></script>
+    <script src="js/app.js"></script>
+</head>
+<body>
+    <div class="chat-container">
+        <header class="chat-header">
+            <button class="back-btn" onclick="goBack()">← 返回首页</button>
+            <div class="room-title" id="roomTitle">匿名聊天室</div>
+            <div class="room-status" id="roomStatus">请先选择聊天室</div>
+        </header>
+
+        <div class="messages-container" id="messagesContainer">
+            <div class="system-message" style="text-align: center; padding: 50px 20px;">
+                <h3>🚫 未选择聊天室</h3>
+                <p>您需要先从首页选择聊天室才能开始聊天</p>
+                <button onclick="goToHomePage()" style="background: #1890ff; color: white; border: none; padding: 10px 20px; border-radius: 20px; margin-top: 20px; cursor: pointer;">
+                    点击前往首页选择聊天室
+                </button>
+            </div>
+        </div>
+
+        <div class="input-area" style="display: none;" id="inputArea">
+            <input type="text" class="message-input" id="messageInput" placeholder="输入消息..." onkeypress="handleKeyPress(event)">
+            <button class="send-btn" onclick="sendMessage()">发送</button>
+        </div>
+    </div>
+
+    <script>
+        // 检查是否有房间信息并初始化聊天
+        async function initChatRoom() {
+            console.log('初始化聊天室...');
+            
+            // 方法1：检查URL参数
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomId = urlParams.get('roomId');
+            const roomName = urlParams.get('roomName');
+            
+            // 方法2：检查sessionStorage
+            const storedRoomId = sessionStorage.getItem('currentRoom');
+            const storedRoomName = sessionStorage.getItem('roomName');
+            
+            console.log('URL参数:', { roomId, roomName });
+            console.log('sessionStorage:', { storedRoomId, storedRoomName });
+            
+            const finalRoomId = roomId || storedRoomId;
+            const finalRoomName = roomName || storedRoomName;
+            
+            if (finalRoomId && finalRoomName) {
+                await setupChatRoom(finalRoomId, finalRoomName);
+            } else {
+                showNoRoomMessage();
+            }
+        }
+
+        async function setupChatRoom(roomId, roomName) {
+            console.log('设置聊天室:', roomId, roomName);
+            
+            // 更新页面显示
+            document.getElementById('roomTitle').textContent = roomName;
+            document.getElementById('roomStatus').textContent = '连接中...';
+            document.getElementById('inputArea').style.display = 'flex';
+            
+            // 清空消息容器，显示欢迎消息
+            const messagesContainer = document.getElementById('messagesContainer');
+            messagesContainer.innerHTML = `
+                <div class="system-message">
+                    正在加入 ${roomName}，请稍候...
+                </div>
+                <div class="system-message">
+                    🔵🐑 蓝色绵羊代表男性，🌸🐑 粉色绵羊代表女性
+                </div>
+            `;
+            
+            // 使用 ChatManager 加入房间
+            try {
+                const identity = await chatManager.joinRoom(roomId, roomName);
+                console.log('成功加入聊天室，用户身份:', identity);
+                
+                // 更新状态显示
+                document.getElementById('roomStatus').textContent = chatManager.isConnected ? '已连接' : '本地模式';
+                document.getElementById('roomStatus').style.color = chatManager.isConnected ? '#52c41a' : '#faad14';
+                
+                // 显示用户身份信息
+                messagesContainer.innerHTML += `
+                    <div class="system-message">
+                        您的身份是：${identity.name} ${identity.avatar} (${identity.gender === 'male' ? '男性' : '女性'})
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('加入聊天室失败:', error);
+                messagesContainer.innerHTML += `
+                    <div class="system-message error">
+                        连接失败，请刷新页面重试
+                    </div>
+                `;
+            }
+            
+            // 设置输入框焦点
+            document.getElementById('messageInput').focus();
+        }
+
+        function showNoRoomMessage() {
+            console.log('没有房间信息，显示提示');
+        }
+
+        function goToHomePage() {
+            window.location.href = 'index.html';
+        }
+
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const content = input.value.trim();
+            
+            if (content) {
+                try {
+                    await chatManager.sendMessage(content);
+                    input.value = '';
+                } catch (error) {
+                    console.error('发送消息失败:', error);
+                    alert('发送消息失败，请重试');
+                }
+            }
+            
+            // 重新聚焦输入框
+            input.focus();
+        }
+
+        // 处理键盘事件
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', initChatRoom);
+    </script>
+</body>
+</html>
